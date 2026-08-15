@@ -1,0 +1,21 @@
+{
+  "name": "resume-screening-system",
+  "version": "1.0.0",
+  "description": "AI-powered Automated Resume Screening and Ranking System using TF-IDF & Cosine Similarity",
+  "main": "index.html",
+  "scripts": {
+    "start": "npx serve .",
+    "dev": "npx serve ."
+  },
+  "keywords": [
+    "resume-screening",
+    "tf-idf",
+    "cosine-similarity",
+    "nlp",
+    "machine-learning",
+    "pdfbox",
+    "spring-boot"
+  ],
+  "author": "Anand Pujari",
+  "license": "MIT"
+}

@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Resume Screening & Ranking System</title>
+  <meta name="description" content="AI-powered Automated Resume Screening and Ranking System using TF-IDF, Cosine Similarity, and Skill Gap Analysis." />
+  
+  <!-- Favicon / Icons -->
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📄</text></svg>" />
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+
+  <!-- Chart.js CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+
+  <!-- PDF.js CDN -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+
+  <!-- Mammoth.js (DOCX Parser) CDN -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
+
+  <!-- Styles -->
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="page-wrapper">
+    <!-- Navbar / Top Header -->
+    <header class="app-header">
+      <div class="container header-container">
+        <div class="brand">
+          <div class="brand-icon">⚡</div>
+          <div>
+            <span class="badge badge-primary">Smart Hiring & NLP Engine</span>
+            <h1 class="brand-title">Resume Screening System</h1>
+          </div>
+        </div>
+        <div class="header-actions">
+          <button id="load-sample-btn" class="btn btn-outline" type="button" title="Load sample JD and candidate resumes to test immediately">
+            <span>✨</span> Load Sample Demo
+          </button>
+          <a href="https://github.com/anandpujari428/Resume-Screening" target="_blank" rel="noopener noreferrer" class="btn btn-github">
+            <svg height="20" width="20" viewBox="0 0 16 16" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"></path></svg>
+            <span>GitHub</span>
+          </a>
+        </div>
+      </div>
+    </header>
+
+    <!-- Main Container -->
+    <main class="container main-content">
+      <!-- Status notification bar -->
+      <div id="status-banner" class="status-banner" role="alert" style="display: none;">
+        <span id="status-icon" class="status-icon">ℹ️</span>
+        <span id="status-text" class="status-text"></span>
+      </div>
+
+      <!-- Controls Grid -->
+      <div class="grid grid-2-col">
+        <!-- Section 1: Job Description Card -->
+        <section class="card">
+          <div class="card-header">
+            <div class="card-title-wrap">
+              <span class="card-icon">📋</span>
+              <div>
+                <h2>1. Job Description</h2>
+                <p class="card-subtitle">Provide the target role requirements</p>
+              </div>
+            </div>
+            <div class="preset-dropdown-wrap">
+              <select id="jd-preset-select" class="select-preset">
+                <option value="">-- Load Role Preset --</option>
+                <option value="java">Java Developer (Spring Boot, SQL)</option>
+                <option value="python">Python / ML Engineer</option>
+                <option value="frontend">Full Stack / Frontend Dev</option>
+                <option value="devops">DevOps & Cloud Engineer</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="card-body">
+            <label for="job-text" class="form-label">Paste Job Description Text</label>
+            <textarea id="job-text" class="form-textarea" placeholder="Paste the job description, required qualifications, and duties here..."></textarea>
+
+            <div class="divider"><span>OR UPLOAD FILE</span></div>
+
+            <label class="file-upload-box" for="job-file">
+              <input id="job-file" type="file" accept=".txt,.pdf,.docx" />
+              <div class="upload-box-content">
+                <span class="upload-icon">📁</span>
+                <div>
+                  <span class="upload-main-text">Upload Job Description File</span>
+                  <span class="upload-sub-text">Supported: .PDF, .DOCX, .TXT (Max 10MB)</span>
+                </div>
+              </div>
+              <span id="job-file-name" class="selected-file-badge" style="display: none;"></span>
+            </label>
+          </div>
+        </section>
+
+        <!-- Section 2: Resumes & Skills Card -->
+        <section class="card">
+          <div class="card-header">
+            <div class="card-title-wrap">
+              <span class="card-icon">👥</span>
+              <div>
+                <h2>2. Candidates & Skills</h2>
+                <p class="card-subtitle">Upload candidate resumes to rank</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="card-body">
+            <label for="custom-skills" class="form-label">
+              Custom Required Skills
+              <span class="label-hint">(Comma-separated; leave empty for defaults)</span>
+            </label>
+            <input id="custom-skills" type="text" class="form-input" placeholder="e.g. Java, Spring Boot, SQL, Python, Git, Docker, REST APIs" />
+
+            <div class="skills-preset-tags">
+              <span class="preset-tag" data-skill="Java">Java</span>
+              <span class="preset-tag" data-skill="Spring Boot">Spring Boot</span>
+              <span class="preset-tag" data-skill="SQL">SQL</span>
+              <span class="preset-tag" data-skill="Python">Python</span>
+              <span class="preset-tag" data-skill="Git">Git</span>
+              <span class="preset-tag" data-skill="Machine Learning">Machine Learning</span>
+              <span class="preset-tag" data-skill="REST API">REST API</span>
+              <span class="preset-tag" data-skill="AWS">AWS</span>
+            </div>
+
+            <label class="form-label mt-4">Upload Candidate Resumes (Multiple)</label>
+            <label class="file-upload-box dropzone" id="resume-dropzone" for="resume-files">
+              <input id="resume-files" type="file" multiple accept=".txt,.pdf,.docx" />
+              <div class="upload-box-content">
+                <span class="upload-icon">📄</span>
+                <div>
+                  <span class="upload-main-text">Drag & drop resumes or click to browse</span>
+                  <span class="upload-sub-text">Upload multiple .PDF, .DOCX, or .TXT files</span>
+                </div>
+              </div>
+            </label>
+
+            <!-- File List Container -->
+            <div id="file-list" class="file-list"></div>
+
+            <div class="action-buttons">
+              <button id="screen-btn" class="btn btn-primary btn-lg" type="button">
+                <span class="btn-spinner" style="display: none;"></span>
+                <span>🚀 Screen &amp; Rank Resumes</span>
+              </button>
+              <button id="clear-btn" class="btn btn-secondary" type="button">Clear All</button>
+            </div>
+          </div>
+        </section>
+      </div>
+
+      <!-- Section 3: Results Section -->
+      <section id="results-section" class="results-section" style="display: none;">
+        <!-- Metrics Ribbon -->
+        <div class="metrics-grid">
+          <div class="metric-card">
+            <span class="metric-icon">🏆</span>
+            <div>
+              <div class="metric-value" id="top-candidate-name">-</div>
+              <div class="metric-label">Top Candidate</div>
+            </div>
+          </div>
+          <div class="metric-card">
+            <span class="metric-icon">🎯</span>
+            <div>
+              <div class="metric-value" id="top-candidate-score">0%</div>
+              <div class="metric-label">Highest Score</div>
+            </div>
+          </div>
+          <div class="metric-card">
+            <span class="metric-icon">📊</span>
+            <div>
+              <div class="metric-value" id="avg-score">0%</div>
+              <div class="metric-label">Average Score</div>
+            </div>
+          </div>
+          <div class="metric-card">
+            <span class="metric-icon">📑</span>
+            <div>
+              <div class="metric-value" id="total-resumes-count">0</div>
+              <div class="metric-label">Resumes Evaluated</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Chart Card -->
+        <div class="card mt-4">
+          <div class="card-header flex-between">
+            <div class="card-title-wrap">
+              <span class="card-icon">📈</span>
+              <div>
+                <h2>Similarity &amp; Match Score Comparison</h2>
+                <p class="card-subtitle">TF-IDF Cosine Similarity &amp; Skill Coverage</p>
+              </div>
+            </div>
+            <div class="export-actions">
+              <button id="export-csv-btn" class="btn btn-outline btn-sm">📥 Export CSV</button>
+              <button id="export-json-btn" class="btn btn-outline btn-sm">💾 Export JSON</button>
+            </div>
+          </div>
+          <div class="chart-container">
+            <canvas id="ranking-chart" height="110"></canvas>
+          </div>
+        </div>
+
+        <!-- Leaderboard Table Card -->
+        <div class="card mt-4">
+          <div class="card-header">
+            <div class="card-title-wrap">
+              <span class="card-icon">🥇</span>
+              <div>
+                <h2>Screening Leaderboard</h2>
+                <p class="card-subtitle">Detailed breakdown of scores, matched skills, and skill gaps</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="table-responsive">
+            <table class="results-table">
+              <thead>
+                <tr>
+                  <th style="width: 70px;">Rank</th>
+                  <th>Candidate / File</th>
+                  <th style="width: 140px;">TF-IDF Score</th>
+                  <th style="width: 130px;">Skill Match</th>
+                  <th>Matched Skills</th>
+                  <th>Missing Skills</th>
+                  <th style="width: 90px;">Action</th>
+                </tr>
+              </thead>
+              <tbody id="results-body">
+                <!-- Populated dynamically by app.js -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- Algorithm Explainer / Viva Card -->
+      <section class="card mt-4 info-card">
+        <div class="card-header">
+          <div class="card-title-wrap">
+            <span class="card-icon">🧠</span>
+            <div>
+              <h2>How the Screening Engine Works</h2>
+              <p class="card-subtitle">NLP vectorization, statistical weighting, and boundary-safe evaluation</p>
+            </div>
+          </div>
+        </div>
+        <div class="card-body info-grid">
+          <div class="info-block">
+            <h3>1. Multi-Format Text Extraction</h3>
+            <p>Direct parsing of <strong>PDF</strong> (via PDF.js), <strong>DOCX</strong> (via Mammoth.js), and <strong>TXT</strong> files with client-side processing.</p>
+          </div>
+          <div class="info-block">
+            <h3>2. Text Cleaning &amp; Stopword Filtering</h3>
+            <p>Strips punctuation, numbers, and common English stopwords to isolate high-value domain tokens.</p>
+          </div>
+          <div class="info-block">
+            <h3>3. TF-IDF Vectorization</h3>
+            <p>Calculates term frequency across documents and penalizes ubiquitous words using Inverse Document Frequency: <code>IDF = ln((N+1)/(DF+1)) + 1</code>.</p>
+          </div>
+          <div class="info-block">
+            <h3>4. Cosine Similarity &amp; Skill Gap Analysis</h3>
+            <p>Measures angle similarity between JD vector and resume vectors, paired with regex boundary matching for short skills (like <code>C</code>, <code>R</code>, <code>SQL</code>).</p>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <!-- Modal for Previewing Extracted Resume Content -->
+    <div id="preview-modal" class="modal-backdrop" style="display: none;">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h3 id="modal-candidate-name">Resume Content Preview</h3>
+          <button id="modal-close-btn" class="modal-close">&times;</button>
+        </div>
+        <div class="modal-body">
+          <pre id="modal-resume-text" class="resume-preview-box"></pre>
+        </div>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="app-footer">
+      <div class="container footer-content">
+        <p>Resume Screening System &copy; 2026 &bull; Designed for College Viva, Final Year Projects &amp; Live HR Deployments.</p>
+        <p class="footer-links">
+          <a href="https://github.com/anandpujari428/Resume-Screening" target="_blank" rel="noopener noreferrer">GitHub Repository</a>
+          <span>&bull;</span>
+          <a href="https://vercel.com" target="_blank" rel="noopener noreferrer">Deployed on Vercel</a>
+        </p>
+      </div>
+    </footer>
+  </div>
+
+  <!-- Application Logic -->
+  <script src="app.js"></script>
+</body>
+</html>
