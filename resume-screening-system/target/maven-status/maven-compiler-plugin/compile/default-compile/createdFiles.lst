@@ -1,0 +1,6 @@
+com\example\resumescreening\model\ScreeningResult.class
+com\example\resumescreening\controller\ScreeningController.class
+com\example\resumescreening\ResumeScreeningApplication.class
+com\example\resumescreening\service\ResumeParserService.class
+com\example\resumescreening\service\ScreeningEngineService$SkillEvaluation.class
+com\example\resumescreening\service\ScreeningEngineService.class

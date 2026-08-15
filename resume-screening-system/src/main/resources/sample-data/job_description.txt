@@ -1,0 +1,11 @@
+We are looking for a Java Developer with strong experience in Spring Boot, SQL, and backend systems. The ideal candidate should be comfortable working with Java, Python, Git, and data structures. Experience with machine learning concepts, communication skills, and collaborative team work is a plus. Candidates should be able to design scalable software, write clean code, and work with modern web technologies. Knowledge of algorithms, database design, and real-world problem solving is essential.
+
+Required Skills:
+Java
+Spring Boot
+SQL
+Python
+Git
+Data Structures
+Machine Learning
+Communication

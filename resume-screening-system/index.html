@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Resume Screening System</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="container">
+      <header class="topbar">
+        <div>
+          <p class="eyebrow">Smart Hiring Solution</p>
+          <h1>Resume Screening System</h1>
+        </div>
+        <button id="upload-rank-btn" class="primary-btn" type="button">Upload &amp; Rank</button>
+      </header>
+
+      <div id="status-message" class="status-message" aria-live="polite"></div>
+
+      <main class="grid">
+        <section class="card">
+          <h2>Job Description</h2>
+          <label for="job-text">Paste job description</label>
+          <textarea id="job-text" placeholder="Paste the job description here...">Java Developer with experience in Spring Boot, REST APIs, SQL, Git, HTML, CSS, JavaScript, and cloud deployment.</textarea>
+
+          <label for="job-file">Or upload a file</label>
+          <input id="job-file" type="file" accept=".txt,.pdf,.doc,.docx" />
+        </section>
+
+        <section class="card">
+          <h2>Candidate Inputs</h2>
+          <label for="skills">Custom skills</label>
+          <input id="skills" type="text" placeholder="Example: Java, Python, SQL, Git, Spring Boot" />
+
+          <label for="resume-files">Upload resumes</label>
+          <input id="resume-files" type="file" multiple accept=".txt,.pdf,.doc,.docx" />
+
+          <button id="screen-btn" class="primary-btn full-width" type="button">Screen Resumes</button>
+        </section>
+      </main>
+
+      <section class="results" id="results-section">
+        <h2>Ranking Summary</h2>
+        <div id="chart-box" class="chart-box"></div>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Rank</th>
+              <th>Name</th>
+              <th>Score</th>
+              <th>Matched Skills</th>
+              <th>Missing Skills</th>
+            </tr>
+          </thead>
+          <tbody id="results-body"></tbody>
+        </table>
+      </section>
+    </div>
+
+    <script>
+      const DEFAULT_SKILLS = [
+        'java', 'spring boot', 'sql', 'html', 'css', 'javascript', 'git',
+        'rest', 'api', 'python', 'c', 'c++', 'data structures', 'machine learning', 'aws', 'cloud'
+      ];
+
+      const statusMessage = document.getElementById('status-message');
+      const resultsBody = document.getElementById('results-body');
+      const chartBox = document.getElementById('chart-box');
+      const uploadRankBtn = document.getElementById('upload-rank-btn');
+      const screenBtn = document.getElementById('screen-btn');
+
+      function showStatus(message, isError = false) {
+        statusMessage.textContent = message;
+        statusMessage.classList.toggle('error', isError);
+        statusMessage.classList.toggle('success', !isError);
+      }
+
+      function normalizeText(text) {
+        return text.toLowerCase().replace(/[^a-z0-9\s+]/g, ' ').replace(/\s+/g, ' ').trim();
+      }
+
+      function parseCustomSkills(input) {
+        if (!input || !input.trim()) return [];
+        return input.split(',').map(skill => skill.trim().toLowerCase()).filter(Boolean);
+      }
+
+      function extractTokenSet(text) {
+        return new Set(normalizeText(text).split(' ').filter(Boolean));
+      }
+
+      function readFileAsText(file) {
+        return new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = () => resolve(String(reader.result || ''));
+          reader.onerror = () => reject(new Error('Unable to read the selected file.'));
+          reader.readAsText(file);
+        });
+      }
+
+      async function getJobDescription() {
+        const typedText = document.getElementById('job-text').value.trim();
+        const uploadedFile = document.getElementById('job-file').files[0];
+
+        if (typedText) return typedText;
+        if (uploadedFile) {
+          const content = await readFileAsText(uploadedFile);
+          return content;
+        }
+        return '';
+      }
+
+      function calculateResumeScore(jobText, resumeText, customSkills) {
+        const allSkills = [...DEFAULT_SKILLS, ...customSkills];
+        const normalizedJob = normalizeText(jobText);
+        const normalizedResume = normalizeText(resumeText);
+
+        const jobWords = extractTokenSet(jobText);
+        const resumeWords = extractTokenSet(resumeText);
+        const overlap = [...jobWords].filter(word => resumeWords.has(word));
+
+        const matchedSkills = allSkills.filter(skill => normalizedResume.includes(skill));
+        const missingSkills = allSkills.filter(skill => !normalizedResume.includes(skill));
+
+        const keywordScore = jobWords.size ? (overlap.length / jobWords.size) * 100 : 0;
+        const skillScore = allSkills.length ? (matchedSkills.length / allSkills.length) * 100 : 0;
+        const overall = Math.min(100, Math.round((keywordScore * 0.7) + (skillScore * 0.3)));
+
+        return {
+          score: overall,
+          matchedSkills,
+          missingSkills,
+          keywordCount: overlap.length,
+          totalKeywords: jobWords.size
+        };
+      }
+
+      async function screenResumes() {
+        try {
+          const jobText = await getJobDescription();
+          const resumeFiles = document.getElementById('resume-files').files;
+          const customSkills = parseCustomSkills(document.getElementById('skills').value);
+
+          if (!jobText.trim()) {
+            showStatus('Please enter a job description or upload a job description file.', true);
+            return;
+          }
+
+          if (!resumeFiles || resumeFiles.length === 0) {
+            showStatus('Please upload at least one resume file.', true);
+            return;
+          }
+
+          const results = [];
+
+          for (const file of resumeFiles) {
+            const text = await readFileAsText(file);
+            const result = calculateResumeScore(jobText, text, customSkills);
+            results.push({
+              name: file.name,
+              score: result.score,
+              matchedSkills: result.matchedSkills.slice(0, 6),
+              missingSkills: result.missingSkills.slice(0, 6)
+            });
+          }
+
+          results.sort((a, b) => b.score - a.score);
+          renderResults(results);
+          showStatus('Resume screening completed successfully.');
+        } catch (error) {
+          showStatus(error.message || 'Something went wrong during screening.', true);
+        }
+      }
+
+      function renderResults(results) {
+        resultsBody.innerHTML = '';
+        chartBox.innerHTML = '';
+
+        results.forEach((result, index) => {
+          const row = document.createElement('tr');
+          row.innerHTML = `
+            <td>${index + 1}</td>
+            <td>${result.name}</td>
+            <td>${result.score}%</td>
+            <td>${result.matchedSkills.length ? result.matchedSkills.join(', ') : 'None'}</td>
+            <td>${result.missingSkills.length ? result.missingSkills.join(', ') : 'None'}</td>
+          `;
+          resultsBody.appendChild(row);
+
+          const barGroup = document.createElement('div');
+          barGroup.className = 'bar-group';
+          const colorClass = index === 0 ? 'bar-high' : index === 1 ? 'bar-mid' : 'bar-low';
+          barGroup.innerHTML = `
+            <div class="bar-label">${result.name}</div>
+            <div class="bar-wrap"><span class="bar ${colorClass}" style="width: ${result.score}%"></span></div>
+            <span class="score">${result.score}%</span>
+          `;
+          chartBox.appendChild(barGroup);
+        });
+      }
+
+      document.getElementById('screen-btn').addEventListener('click', screenResumes);
+      document.getElementById('upload-rank-btn').addEventListener('click', screenResumes);
+    </script>
+  </body>
+</html>

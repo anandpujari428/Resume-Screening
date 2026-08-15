@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Resume Screening System</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: linear-gradient(135deg, #eef5ff 0%, #f8f9fc 100%);
+            margin: 0;
+            padding: 40px 20px;
+            color: #1d3557;
+        }
+        .container {
+            max-width: 1100px;
+            margin: 0 auto;
+            background: #ffffff;
+            border-radius: 16px;
+            box-shadow: 0 10px 30px rgba(30, 41, 59, 0.1);
+            padding: 32px;
+        }
+        h1 {
+            margin-top: 0;
+            color: #0d3b66;
+        }
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 28px;
+        }
+        .card {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 22px;
+        }
+        label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+        textarea, input[type="text"], input[type="file"] {
+            width: 100%;
+            box-sizing: border-box;
+            padding: 12px 14px;
+            border: 1px solid #cbd5e1;
+            border-radius: 10px;
+            margin-bottom: 16px;
+            font-size: 15px;
+        }
+        textarea {
+            min-height: 220px;
+            resize: vertical;
+        }
+        button {
+            background: #2563eb;
+            color: white;
+            border: none;
+            border-radius: 10px;
+            padding: 13px 22px;
+            font-size: 16px;
+            font-weight: 700;
+            cursor: pointer;
+        }
+        button:hover {
+            background: #1d4ed8;
+        }
+        .error {
+            background: #fef2f2;
+            border: 1px solid #fecaca;
+            color: #b91c1c;
+            padding: 12px 14px;
+            border-radius: 10px;
+            margin-bottom: 18px;
+        }
+        .hint {
+            font-size: 13px;
+            color: #475569;
+            margin-top: -8px;
+            margin-bottom: 16px;
+        }
+        @media (max-width: 768px) {
+            .grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Resume Screening System</h1>
+
+        <div th:if="${errorMessage != null}" class="error" th:text="${errorMessage}"></div>
+
+        <form th:action="@{/screen}" method="post" enctype="multipart/form-data">
+            <div class="grid">
+                <div class="card">
+                    <label for="jobDescription">Job Description</label>
+                    <textarea id="jobDescription" name="jobDescription" placeholder="Paste the job description here..."></textarea>
+                    <div class="hint">If text and file are both provided, pasted text is used.</div>
+
+                    <label for="jobDescriptionFile">Job Description File (Optional)</label>
+                    <input id="jobDescriptionFile" type="file" name="jobDescriptionFile" accept=".txt,.pdf,.docx">
+                </div>
+
+                <div class="card">
+                    <label for="customSkills">Custom Skills (Optional)</label>
+                    <input id="customSkills" type="text" name="customSkills" placeholder="Example: Java, Python, Spring Boot, SQL, Git, C, R">
+                    <div class="hint">Leave empty to use the default skill list.</div>
+
+                    <label for="resumes">Resume Uploads</label>
+                    <input id="resumes" type="file" name="resumes" multiple accept=".txt,.pdf,.docx">
+                    <div class="hint">Upload one or more resumes in PDF, DOCX, or TXT format.</div>
+
+                    <button type="submit">Screen Resumes</button>
+                </div>
+            </div>
+        </form>
+    </div>
+</body>
+</html>
